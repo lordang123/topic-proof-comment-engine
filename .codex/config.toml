@@ -1,3 +1,11 @@
+# 本仓库的 Codex 设置。选题验证要联网、要调用本机的 ego lite，默认沙盒会挡住这两件事。
+# 这里只放开本仓库目录内的写入和网络；每次越界操作仍会问你。说明见 docs/安装.md「Codex 的权限设置」。
+approval_policy = "on-request"
+sandbox_mode = "workspace-write"
+
+[sandbox_workspace_write]
+network_access = true
+
 [agents.collector]
 description = "采集员。只跑仓库里现成的采集、保存（用户同意后）、转录脚本，落盘并报告结果；不判断选题，不定评论簇。"
 config_file = "agents/collector.toml"

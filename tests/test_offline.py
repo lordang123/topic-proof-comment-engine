@@ -266,12 +266,12 @@ class Frames(unittest.TestCase):
                                                      "files": [{"file": "音轨.m4a"}, {"file": "画面.mp4"}], "needs_frames": True}),
                                           encoding="utf-8")
             r = subprocess.run([PY, str(ROOT / "scripts" / "frames.py"), str(d), "--at", "4", "--cuts", "0"],
-                               capture_output=True, text=True)
+                               capture_output=True, text=True, encoding="utf-8", errors="replace")
             self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
             self.assertTrue(v.exists())  # no transcript yet: keep the media
             self.assertGreaterEqual(len(list((d / "关键帧").glob("*.jpg"))), 5)
             (d / "逐字稿.md").write_text("x", encoding="utf-8")
-            r = subprocess.run([PY, str(ROOT / "scripts" / "frames.py"), str(d), "--cuts", "0"], capture_output=True, text=True)
+            r = subprocess.run([PY, str(ROOT / "scripts" / "frames.py"), str(d), "--cuts", "0"], capture_output=True, text=True, encoding="utf-8", errors="replace")
             self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
             self.assertFalse(v.exists())
             self.assertFalse((d / "音轨.m4a").exists())
@@ -372,6 +372,45 @@ class Pages(unittest.TestCase):
             self.assertNotIn("<2 条时搜索", text, f)
             self.assertNotIn("不够再搜索", text, f)
             self.assertNotIn("冲突", text, f)
+
+    def test_check_topic_lists_missing_then_passes(self):
+        import check_topic
+        with tempfile.TemporaryDirectory() as td:
+            cfg = dict(DEFAULTS, work_dir=td)
+            d = fake_topic(td)
+            bad = {(r[1], r[4]) for r in check_topic.check(d, cfg) if not r[0]}
+            self.assertIn((3, True), bad)  # no transcript: ask the user
+            self.assertTrue(any(step == 6 for step, _ in bad))  # 2 keywords, no 观众说法 group
+            # finish every step
+            rep = d / "选题验证报告.md"
+            rep.write_text(rep.read_text(encoding="utf-8").replace(
+                "搜索词：词一（场景与原型）、词二（矛盾）", "搜索词：词一（场景与原型）、词二（矛盾）、词三（观众说法）"), encoding="utf-8")
+            (d / "对标" / "逐字稿.md").write_text("x", encoding="utf-8")
+            col = d / "采集"
+            col.mkdir()
+            ids = ["7000000000000000001", "7000000000000000002", "7000000000000000003"]
+            (col / "推荐_1.json").write_text(json.dumps({"visits": [{"rel": [
+                {"id": ids[1], "txt": "00:30 | 同题一 | 2万"}, {"id": "7" * 19, "txt": "00:30 | 无关 | 5万"},
+                {"id": "8" * 19, "txt": "00:30 | 低赞 | 300"}]}]}), encoding="utf-8")
+            (col / "搜索_1.json").write_text(json.dumps({"searches": [
+                {"kw": k, "ready": True, "cards": [{"id": ids[2], "txt": "同题二 | 1万"}]} for k in ("词一", "词二", "词三")]}), encoding="utf-8")
+            (col / "采集汇总.tsv").write_text("片子ID\t状态\t条数\t原因\n" + "".join(f"{i}\t成功\t90\t\n" for i in ids), encoding="utf-8")
+            still = [r for r in check_topic.check(d, cfg) if not r[0]]
+            self.assertTrue(any("推荐_1.json" in r[2] for r in still))  # the off-topic card is neither read nor skipped
+            (col / check_topic.SKIP).write_text("7777777777777777777\t卡片文字明显不同题\n", encoding="utf-8")
+            (d / "分簇_同题").mkdir()
+            (d / "分簇_同题" / "评论分簇.md").write_text(FAKE_CLUSTERS, encoding="utf-8")
+            (d / "分簇_同题" / "评论底盘.md").write_text(f"来源文件：`{ids[1]}/评论.json`；`{ids[2]}/评论.json`", encoding="utf-8")
+            (d / "复原卡.md").write_text("复原卡，已填完", encoding="utf-8")
+            (d / "选题验证结果页.html").write_text("x", encoding="utf-8")
+            left = [r for r in check_topic.check(d, cfg) if not r[0]]
+            self.assertEqual(left, [])
+
+    def test_skill_requires_run_to_end(self):
+        for f in (".agents/skills/选题验证/SKILL.md", "AGENTS.md"):
+            text = (ROOT / f).read_text(encoding="utf-8")
+            self.assertIn("一次跑完", text, f)
+            self.assertIn("check_topic.py", text, f)
 
     def test_parse_topic(self):
         with tempfile.TemporaryDirectory() as td:

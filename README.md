@@ -89,6 +89,7 @@
 | `scripts/ego_run.py`         | 所有浏览器脚本的唯一入口：全机排队，一次一个页面，用完就收                                               |
 | `scripts/result_page.py`     | 把一个选题做成 4 屏结果页（结论、同题对比、评论机制、对标结构与关键帧），1920×1080，适合录屏                   |
 | `scripts/board_data.py`      | 刷新光球看板：扫描 `work/`，重建各选题的结果页，写 `board/data.js`                                      |
+| `scripts/check_topic.py`     | 交付前检查一个选题的各步是否做完；缺什么、回哪一步、跑什么命令（给 agent 用） |
 | `scripts/check_env.py`       | 自检，列出缺什么、怎么修                                                                |
 
 ## 结果页与光球看板

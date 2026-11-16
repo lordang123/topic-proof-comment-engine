@@ -22,27 +22,36 @@ if (-not (Get-Command winget -ErrorAction SilentlyContinue)) {
   throw "没有 winget。请在 Microsoft Store 安装「应用安装程序」后重试。"
 }
 function Rest($a) { if ($a.Length -gt 1) { $a[1..($a.Length - 1)] } else { @() } }
+function Test-Py($c) {
+  # The python.exe in WindowsApps is a Microsoft Store stub, not Python: skip it.
+  $cmd = Get-Command $c[0] -ErrorAction SilentlyContinue
+  if (-not $cmd -or $cmd.Source -like "*\WindowsApps\*") { return $false }
+  $old = $ErrorActionPreference; $ErrorActionPreference = "Continue"
+  try {
+    $r = @(Rest $c)
+    $null = & $c[0] @r -c "import sys; sys.exit(sys.version_info < (3, 10))" 2>&1
+    return ($LASTEXITCODE -eq 0)
+  } catch { return $false } finally { $ErrorActionPreference = $old }
+}
+function Check($what) { if ($LASTEXITCODE -ne 0) { throw "$what 失败（退出码 $LASTEXITCODE）。把上面的报错原文发给维护者。" } }
 $Py = $null
 foreach ($c in @(@("py", "-3.12"), @("py", "-3.11"), @("py", "-3.13"), @("python"))) {
-  if (Get-Command $c[0] -ErrorAction SilentlyContinue) {
-    $r = @(Rest $c)
-    & $c[0] @r -c "import sys; sys.exit(sys.version_info < (3, 10))" 2>$null
-    if ($LASTEXITCODE -eq 0) { $Py = $c; break }
-  }
+  if (Test-Py $c) { $Py = $c; break }
 }
 if (-not $Py) {
   Need "python" "Python.Python.3.12"
   Refresh-Path
   $Py = @("py", "-3.12")
+  if (-not (Test-Py $Py)) { throw "装好 Python 后仍找不到 py -3.12。关掉 PowerShell，重开后再运行本脚本。" }
 }
 Need "ffmpeg" "Gyan.FFmpeg"
 Refresh-Path
 
 Say "2/5 Python 环境（.venv）与依赖"
-if (-not (Test-Path .venv)) { $r = @(Rest $Py); & $Py[0] @r -m venv .venv }
+if (-not (Test-Path .venv)) { $r = @(Rest $Py); & $Py[0] @r -m venv .venv; Check "建 .venv" }
 $VPy = Join-Path $PSScriptRoot ".venv\Scripts\python.exe"
 & $VPy -m pip install --upgrade pip -q
-& $VPy -m pip install -r requirements.txt
+& $VPy -m pip install -r requirements.txt; Check "安装依赖"
 
 Say "3/5 显卡"
 if (Get-Command nvidia-smi -ErrorAction SilentlyContinue) {
@@ -53,7 +62,7 @@ if (Get-Command nvidia-smi -ErrorAction SilentlyContinue) {
 }
 
 Say "4/5 下载转录模型（约 3 GB，中断后重跑可续传）"
-& $VPy scripts\transcribe.py --prepare
+& $VPy scripts\transcribe.py --prepare; Check "下载转录模型"
 
 Say "5/5 自检"
 & $VPy scripts\check_env.py

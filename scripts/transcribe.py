@@ -106,6 +106,8 @@ def prepare_with_fallback(engine, model, cfg):
         endpoints.append(MIRROR)
     for ep in endpoints:
         env = dict(os.environ)
+        env.setdefault("HF_HUB_DISABLE_XET", "1")  # plain HTTPS: the Xet transfer stalled mid-download on a Windows test PC
+        env.setdefault("HF_HUB_DOWNLOAD_TIMEOUT", "90")
         if ep:
             env["HF_ENDPOINT"] = ep
             print(f"模型下载源：{ep}", file=sys.stderr)

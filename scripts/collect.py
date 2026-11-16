@@ -102,11 +102,11 @@ def cmd_search(a, cfg):
     write_json(p, d)
     ss = d.get("searches", [])
     rec = {"at": d.get("started"), "n": len(ss), "gaps_s": [s.get("gap_after_s") for s in ss if s.get("gap_after_s")],
-           "empty": [s.get("idx") for s in ss if s.get("nAuthor") == 0], "stop": d.get("stop")}
+           "empty": [s.get("idx") for s in ss if not s.get("ready")], "stop": d.get("stop")}
     with open(cache_path(cfg) / "search_log.jsonl", "a", encoding="utf-8") as fh:
         fh.write(json.dumps(rec, ensure_ascii=False) + "\n")
     for s in ss:
-        print(f"## {s['idx']}. {s['kw']}｜卡片 {s.get('nAnchor', 0)} 张" + ("｜空结果" if s.get("nAuthor") == 0 else ""))
+        print(f"## {s['idx']}. {s['kw']}｜卡片 {s.get('nAnchor', 0)} 张" + ("｜空结果" if not s.get("ready") else ""))
         for c in (s.get("cards") or [])[:20]:
             print(f"- {c['link']}  {c['txt'][:90]}")
         if s.get("empty_body"):
