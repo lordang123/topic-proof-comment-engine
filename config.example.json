@@ -1,0 +1,17 @@
+{
+  "work_dir": "work",
+  "comment_min": 500,
+  "years_back": 1,
+  "like_min": 1500,
+  "reply_top": 3,
+  "max_top": 200,
+  "hot_k": 45,
+  "pos_m": 45,
+  "chunk": 20,
+  "max_keywords": 6,
+  "whisper_model": "large-v3",
+  "hf_endpoint": "",
+  "transcribe_prompt": "以下是普通话短视频的口播和对话。",
+  "board_title": "格厚AI · 爆款内容工厂",
+  "board_subtitle": "GEHOU · NEURAL CONTENT ENGINE"
+}

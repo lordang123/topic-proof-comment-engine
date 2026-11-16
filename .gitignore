@@ -1,0 +1,12 @@
+# Your own data never goes into the repository.
+work/
+models/
+config.json
+__pycache__/
+*.pyc
+.DS_Store
+.venv/
+
+# Board data is built from your own work folder.
+board/data.js
+my_account.json

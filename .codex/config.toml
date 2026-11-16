@@ -1,0 +1,7 @@
+[agents.collector]
+description = "采集员。只跑仓库里现成的采集、保存（用户同意后）、转录脚本，落盘并报告结果；不判断选题，不定评论簇。"
+config_file = "agents/collector.toml"
+
+[agents.analyst]
+description = "分析员。定搜索词、判同题、评论分簇与标注、对标复原、判情形、写报告。"
+config_file = "agents/analyst.toml"

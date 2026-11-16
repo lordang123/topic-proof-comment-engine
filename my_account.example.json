@@ -1,0 +1,16 @@
+{
+  "name": "我的账号名",
+  "updated": "2026-11-15",
+  "followers": null,
+  "likes_total": null,
+  "works": [
+    {
+      "title": "作品标题（照抄）",
+      "date": "2026-10-01",
+      "play": 0,
+      "like": 0,
+      "comment": 0,
+      "url": "https://www.douyin.com/video/<视频id>"
+    }
+  ]
+}
